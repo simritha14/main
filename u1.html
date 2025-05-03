@@ -48,15 +48,17 @@
       color: #333;
       box-shadow: 0 4px 6px rgba(0,0,0,0.1);
       transition: background-color 0.3s;
+      display: inline-block;
+      margin-top: 20px;
     }
 
     .image-upload label:hover {
       background-color: #e0b76c;
     }
 
-    #preview {
-      margin-top: 20px;
+    #preview-container img {
       max-width: 100%;
+      margin-top: 20px;
       border-radius: 12px;
     }
 
@@ -73,41 +75,69 @@
   <header>Vital Statistics</header>
 
   <div class="container">
-<div class="image-upload">
-  <label for="file-input">Upload Test Papers</label>
-  <input type="file" id="file-input" accept="image/*" multiple>
-  <div id="preview-container"></div>
-</div>
+    <div class="image-upload">
+      <div id="preview-container"></div>
+      <label for="file-input" id="upload-label">Upload Test Papers</label>
+      <input type="file" id="file-input" accept="image/*" multiple>
+    </div>
 
-<div class="score-section">
-  Score: <span id="score">-- / 100</span>
-</div>
+    <div class="score-section">
+      Score: <span id="score">-- / 100</span>
+    </div>
+  </div>
 
-<script>
-  const fileInput = document.getElementById('file-input');
-  const previewContainer = document.getElementById('preview-container');
+  <script>
+    const fileInput = document.getElementById('file-input');
+    const previewContainer = document.getElementById('preview-container');
+    const uploadLabel = document.getElementById('upload-label');
 
-  fileInput.addEventListener('change', () => {
-    previewContainer.innerHTML = ''; // Clear previous previews
+    // Load saved images on page load
+    window.addEventListener('DOMContentLoaded', () => {
+      const savedImages = JSON.parse(localStorage.getItem('uploadedImages') || '[]');
+      savedImages.forEach(dataURL => {
+        displayImage(dataURL);
+      });
 
-    const files = Array.from(fileInput.files);
-    files.forEach(file => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const img = document.createElement('img');
-        img.src = reader.result;
-        img.style.maxWidth = '100%';
-        img.style.marginTop = '20px';
-        img.style.borderRadius = '12px';
-        previewContainer.appendChild(img);
-      };
-      reader.readAsDataURL(file);
+      if (savedImages.length > 0) {
+        moveUploadButton();
+      }
     });
-  });
 
-  // Dummy score
-  document.getElementById('score').textContent = '85 / 100';
-</script>
+    fileInput.addEventListener('change', () => {
+      const files = Array.from(fileInput.files);
+      const savedImages = JSON.parse(localStorage.getItem('uploadedImages') || '[]');
+
+      files.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const dataURL = reader.result;
+          displayImage(dataURL);
+
+          // Save to localStorage
+          savedImages.push(dataURL);
+          localStorage.setItem('uploadedImages', JSON.stringify(savedImages));
+
+          moveUploadButton();
+        };
+        reader.readAsDataURL(file);
+      });
+
+      fileInput.value = ''; // Clear input
+    });
+
+    function displayImage(src) {
+      const img = document.createElement('img');
+      img.src = src;
+      previewContainer.appendChild(img);
+    }
+
+    function moveUploadButton() {
+      previewContainer.insertAdjacentElement('afterend', uploadLabel);
+    }
+
+    // Dummy score
+    document.getElementById('score').textContent = '85 / 100';
+  </script>
 
 </body>
 </html>
